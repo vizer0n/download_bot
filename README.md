@@ -1,3 +1,12 @@
-# download_bot
-test commit by Vizer0n
-с возвращением
+# download bot
+simple telegram echo bot
+
+usage:
+
+1. copy repository
+2. create .env file into download_bot
+3. print line in .env file:
+
+**TOKEN = "XXX:XXX"**
+
+where **XXX:XXX** - your bot token
