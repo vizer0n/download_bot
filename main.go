@@ -2,13 +2,11 @@ package main
 
 import (
 	"log"
+	"os"
 	"time"
 
-	"os"
-
-	tele "gopkg.in/telebot.v4"
-
 	"github.com/joho/godotenv"
+	tele "gopkg.in/telebot.v4"
 )
 
 func getToken() string {
@@ -33,13 +31,8 @@ func main() {
 		log.Fatal(err)
 		return
 	}
-	bot.Handle(tele.OnText, func(c tele.Context) error {
-		user := c.Chat().Username
-		msg_text := c.Message().Text
-		log_message := "User " + user + " send: " + msg_text
-		log.Print(log_message)
-		return c.Send(msg_text)
-	})
+
+	register_handlers(bot)
 
 	bot.Start()
 }
