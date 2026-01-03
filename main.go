@@ -19,6 +19,7 @@ func getToken() string {
 }
 
 func main() {
+	tiktok := NewTiktokClient()
 	TOKEN := getToken()
 
 	pref := tele.Settings{
@@ -32,7 +33,7 @@ func main() {
 		return
 	}
 
-	register_handlers(bot)
+	register_handlers(bot, tiktok)
 
 	bot.Start()
 }

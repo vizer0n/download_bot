@@ -3,33 +3,39 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"log"
-	"net/http"
-
 	html "golang.org/x/net/html"
 	"golang.org/x/net/html/atom"
+	"log"
 )
 
-func get_download_link(resp http.Response, service string) (string, error) {
+func get_download_link(url string, service string, tiktok *TiktokHttp) (string, string, error) {
 	switch service {
 	case "tiktok":
-		download_url, err := parse_tiktok(resp)
+		download_url, video_name, err := parse_tiktok(url, tiktok)
 		if err != nil {
 			log.Print(err)
-			return "", err
+			return "", "", err
 		}
-		return download_url, err
+		return download_url, video_name, err
 	default:
-		return "", errors.New(service + " пока что не поддерживется")
+		return "", "", errors.New(service + " пока что не поддерживется")
 	}
 
 }
 
-func parse_tiktok(resp http.Response) (string, error) {
-	doc, err := html.Parse(resp.Body)
+func get_video_name_tiktok(itemStruct map[string]any) string {
+	id := itemStruct["id"].(string)
+	author := itemStruct["author"].(map[string]any)["uniqueId"].(string)
+	return author + "__" + id + ".mp4"
+}
+
+func parse_tiktok(url string, tiktok *TiktokHttp) (string, string, error) {
+	respBody, err := tiktok.TiktokParse(url, false)
+
+	doc, err := html.Parse(respBody)
 	if err != nil {
 		log.Print(err)
-		return "", err
+		return "", "", err
 	}
 
 	for n := range doc.Descendants() {
@@ -40,7 +46,7 @@ func parse_tiktok(resp http.Response) (string, error) {
 					data := []byte(n.FirstChild.Data)
 					if err := json.Unmarshal(data, &data_map); err != nil {
 						log.Print(err)
-						return "", err
+						return "", "", err
 					}
 					var playAddr string
 
@@ -50,7 +56,8 @@ func parse_tiktok(resp http.Response) (string, error) {
 								if itemStruct, ok := itemInfo["itemStruct"].(map[string]any); ok {
 									if video, ok := itemStruct["video"].(map[string]any); ok {
 										playAddr = video["playAddr"].(string)
-										return playAddr, nil
+										video_name := get_video_name_tiktok(itemStruct)
+										return playAddr, video_name, nil
 									}
 								}
 							}
@@ -60,5 +67,5 @@ func parse_tiktok(resp http.Response) (string, error) {
 			}
 		}
 	}
-	return "Not Found", nil
+	return "Not Found", "", nil
 }

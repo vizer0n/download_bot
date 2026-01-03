@@ -1,5 +1,4 @@
 # download bot
-simple telegram echo bot
 
 usage:
 
@@ -10,3 +9,5 @@ usage:
 **TOKEN = "XXX:XXX"**
 
 where **XXX:XXX** - your bot token
+
+4. go run *.go
