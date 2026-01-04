@@ -3,9 +3,10 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"log"
+
 	html "golang.org/x/net/html"
 	"golang.org/x/net/html/atom"
-	"log"
 )
 
 func get_download_link(url string, service string, tiktok *TiktokHttp) (string, string, error) {
@@ -48,16 +49,19 @@ func parse_tiktok(url string, tiktok *TiktokHttp) (string, string, error) {
 						log.Print(err)
 						return "", "", err
 					}
-					var playAddr string
 
 					if root, ok := data_map["__DEFAULT_SCOPE__"].(map[string]any); ok {
 						if webapp, ok := root["webapp.video-detail"].(map[string]any); ok {
 							if itemInfo, ok := webapp["itemInfo"].(map[string]any); ok {
 								if itemStruct, ok := itemInfo["itemStruct"].(map[string]any); ok {
 									if video, ok := itemStruct["video"].(map[string]any); ok {
-										playAddr = video["playAddr"].(string)
-										video_name := get_video_name_tiktok(itemStruct)
-										return playAddr, video_name, nil
+										if playAddr, ok := video["playAddr"].(string); ok {
+											video_name := get_video_name_tiktok(itemStruct)
+											return playAddr, video_name, nil
+										} else {
+											return "", "", errors.New("Бот не может скачать это видео, приносим свои извинения.")
+										}
+
 									}
 								}
 							}
@@ -67,5 +71,5 @@ func parse_tiktok(url string, tiktok *TiktokHttp) (string, string, error) {
 			}
 		}
 	}
-	return "Not Found", "", nil
+	return "", "", errors.New("К сожалению, бот не может скачать это видео. Попробуйте позднее")
 }

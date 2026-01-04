@@ -35,7 +35,6 @@ func register_handlers(bot *tele.Bot, tiktok *TiktokHttp) {
 		// Получение ссылки для скачивания видео
 		download_url, video_name, err := get_download_link(msg_text, service, tiktok)
 		if err != nil {
-			log.Print(err)
 			return c.Send(err.Error())
 		}
 		log.Print("get_download_link() сработана успешно")
