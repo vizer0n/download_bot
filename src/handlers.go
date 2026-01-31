@@ -6,7 +6,7 @@ import (
 	tele "gopkg.in/telebot.v4"
 )
 
-func register_handlers(bot *tele.Bot, tiktok *TiktokHttp) {
+func register_handlers(bot *tele.Bot, router *Router) {
 	bot.Handle("/start", func(c tele.Context) error {
 		return c.Send("Привет! Отправь ссылку на видео tiktok, youtube, instagram и я скачаю его")
 	})
@@ -17,33 +17,37 @@ func register_handlers(bot *tele.Bot, tiktok *TiktokHttp) {
 		msg_text := c.Message().Text
 		log.Print("User " + user + " send text: " + msg_text)
 
-		// Проверка доменного имени
-		domain, err := check_domain(msg_text)
-		if err != nil {
-			log.Print(err)
-			return c.Send("Введите корректную ссылку")
-		}
-
-		// Проверка сервиса на корректность (Youtube, Tiktok, Instagram)
-		service, err := check_correct_service(domain)
-		if err != nil {
-			log.Print(err)
-			return c.Send("Неизвестный сервис. Отправьте ссылку на Tiktok, Youtube, Instagram")
-		}
-
-		// Получение ссылки для скачивания видео
-		download_url, video_name, err := get_download_link(msg_text, service, tiktok)
+		// Определение сервиса
+		service, err := router.Resolve(msg_text)
 		if err != nil {
 			log.Print(err)
 			return c.Send(err.Error())
 		}
 
-		video_path, err := download_video(download_url, video_name, service, tiktok)
+		// Инициализация видео объекта
+		video := service.NewVideo(msg_text)
+
+		// Получение HTML страницы в виде *html.Node
+		err = video.GetHTML()
 		if err != nil {
-			return c.Send(err.Error())
+			log.Print(err)
+			return c.Send("Произошла ошибка, попробуйте позже")
 		}
+
+		// Получение ссылки для скачивания видео и его название
+		err = video.GetVideoInfo()
+		if err != nil {
+			log.Print(err)
+			return c.Send("Произошла ошибка, попробуйте позже")
+		}
+
+		err = video.Download()
+		if err != nil {
+			log.Print()
+		}
+
 		c.Notify(tele.UploadingVideo)
-		return c.Send(&tele.Video{File: tele.FromDisk(video_path)})
+		return c.Send(&tele.Video{File: tele.FromDisk(video.GetVideoPath())})
 
 	})
 }

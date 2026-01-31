@@ -20,6 +20,9 @@ func getToken() string {
 
 func main() {
 	tiktok := NewTiktokClient()
+
+	router := NewRouter(tiktok)
+
 	TOKEN := getToken()
 
 	pref := tele.Settings{
@@ -33,7 +36,7 @@ func main() {
 		return
 	}
 
-	register_handlers(bot, tiktok)
+	register_handlers(bot, router)
 
 	bot.Start()
 }

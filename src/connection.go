@@ -1,17 +1,43 @@
 package main
 
 import (
+	"errors"
 	"io"
 	"net/http"
 	"net/http/cookiejar"
+	"strings"
 	"time"
 )
 
-type TiktokHttp struct {
+type VideoService interface {
+	NewVideo(string) VideoObject
+	Match(string) bool
+	GetHTML(string) (io.ReadCloser, error)
+	FetchVideo(string) (io.ReadCloser, error)
+}
+
+type Router struct {
+	services []VideoService
+}
+
+func NewRouter(services ...VideoService) *Router {
+	return &Router{services: services}
+}
+
+func (r *Router) Resolve(url string) (VideoService, error) {
+	for _, s := range r.services {
+		if s.Match(url) == true {
+			return s, nil
+		}
+	}
+	return nil, errors.New("Неизвестный сервис")
+}
+
+type TiktokService struct {
 	Client *http.Client
 }
 
-func NewTiktokClient() *TiktokHttp {
+func NewTiktokClient() *TiktokService {
 	jar, _ := cookiejar.New(nil)
 
 	client := &http.Client{
@@ -19,12 +45,20 @@ func NewTiktokClient() *TiktokHttp {
 		Timeout: 30 * time.Second,
 	}
 
-	return &TiktokHttp{
+	return &TiktokService{
 		Client: client,
 	}
 }
 
-func (t *TiktokHttp) NewRequest(method, url string) (*http.Request, error) {
+func (t *TiktokService) NewVideo(url string) VideoObject {
+	return NewTiktokVideo(t, url)
+}
+
+func (t *TiktokService) Match(url string) bool {
+	return strings.Contains(url, "tiktok.com")
+}
+
+func (t *TiktokService) newRequest(method, url string) (*http.Request, error) {
 	req, err := http.NewRequest(method, url, nil)
 	if err != nil {
 		return nil, err
@@ -37,16 +71,25 @@ func (t *TiktokHttp) NewRequest(method, url string) (*http.Request, error) {
 	return req, nil
 }
 
-func (t *TiktokHttp) TiktokParse(url string, mp4 bool) (io.ReadCloser, error) {
-	req, _ := t.NewRequest("GET", url)
-
-	if mp4 {
-		req.Header.Set("Referer", "https://www.tiktok.com/")
-	}
+func (t *TiktokService) GetHTML(url string) (io.ReadCloser, error) {
+	req, _ := t.newRequest("GET", url)
 
 	resp, err := t.Client.Do(req)
 	if err != nil {
 		return nil, err
 	}
+
+	return resp.Body, nil
+}
+
+func (t *TiktokService) FetchVideo(url string) (io.ReadCloser, error) {
+	req, _ := t.newRequest("GET", url)
+	req.Header.Set("Referer", "https://www.tiktok.com/")
+
+	resp, err := t.Client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
 	return resp.Body, nil
 }
