@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"log"
 
 	html "golang.org/x/net/html"
 	"golang.org/x/net/html/atom"
@@ -14,7 +13,6 @@ func get_download_link(url string, service string, tiktok *TiktokHttp) (string, 
 	case "tiktok":
 		download_url, video_name, err := parse_tiktok(url, tiktok)
 		if err != nil {
-			log.Print(err)
 			return "", "", err
 		}
 		return download_url, video_name, err
@@ -35,7 +33,6 @@ func parse_tiktok(url string, tiktok *TiktokHttp) (string, string, error) {
 
 	doc, err := html.Parse(respBody)
 	if err != nil {
-		log.Print(err)
 		return "", "", err
 	}
 
@@ -46,7 +43,6 @@ func parse_tiktok(url string, tiktok *TiktokHttp) (string, string, error) {
 					var data_map map[string]any
 					data := []byte(n.FirstChild.Data)
 					if err := json.Unmarshal(data, &data_map); err != nil {
-						log.Print(err)
 						return "", "", err
 					}
 

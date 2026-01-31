@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"io"
-	"log"
 	"os"
 )
 
@@ -23,11 +22,9 @@ func download_video(url string, video_name string, service string, tiktok *Tikto
 		}
 		defer video_file.Close()
 
-		written, err := io.Copy(video_file, resp_body)
-		if err != nil {
+		if _, err := io.Copy(video_file, resp_body); err != nil {
 			return "", err
 		}
-		log.Print(written)
 
 		return video_path, nil
 	default:

@@ -10,4 +10,4 @@ usage:
 
 where **XXX:XXX** - your bot token
 
-4. go run *.go
+4. go run src/*.go
