@@ -26,6 +26,7 @@ func register_handlers(bot *tele.Bot, router *Router) {
 
 		// Инициализация видео объекта
 		video := service.NewVideo(msg_text)
+		log.Print("Создан новый объект ", video.GetServiceName(), " video")
 
 		// Получение HTML страницы в виде *html.Node
 		err = video.GetHTML()
@@ -41,13 +42,30 @@ func register_handlers(bot *tele.Bot, router *Router) {
 			return c.Send("Произошла ошибка, попробуйте позже")
 		}
 
+		log.Print("Начата загрузка видео...")
 		err = video.Download()
 		if err != nil {
-			log.Print()
+			log.Print(err)
+			return c.Send("Не удалось скачать видео, отправьте ссылку ещё раз")
 		}
+		log.Print("Видео загружено, идёт отправка на сервер...")
 
+		upload_video := &tele.Video{
+			File:      tele.FromDisk(video.GetVideoPath()),
+			Duration:  int(video.GetDuration()),
+			Width:     int(video.GetWidth()),
+			Height:    int(video.GetHeight()),
+			Streaming: true,
+			FileName:  video.GetVideoName(),
+		}
 		c.Notify(tele.UploadingVideo)
-		return c.Send(&tele.Video{File: tele.FromDisk(video.GetVideoPath())})
+		err = c.Send(upload_video)
+		if err != nil {
+			log.Print(err)
+			return c.Send("Приоизошла ошибка при отправке видео, попробуйте ещё раз")
+		}
+		log.Print("Видео отправлено! Идёт удаление файла")
 
+		return video.Delete()
 	})
 }

@@ -10,6 +10,7 @@ import (
 )
 
 type VideoService interface {
+	GetName() string
 	NewVideo(string) VideoObject
 	Match(string) bool
 	GetHTML(string) (io.ReadCloser, error)
@@ -35,6 +36,7 @@ func (r *Router) Resolve(url string) (VideoService, error) {
 
 type TiktokService struct {
 	Client *http.Client
+	Name   string
 }
 
 func NewTiktokClient() *TiktokService {
@@ -47,7 +49,12 @@ func NewTiktokClient() *TiktokService {
 
 	return &TiktokService{
 		Client: client,
+		Name:   "tiktok",
 	}
+}
+
+func (t *TiktokService) GetName() string {
+	return t.Name
 }
 
 func (t *TiktokService) NewVideo(url string) VideoObject {
