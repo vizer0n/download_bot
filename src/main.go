@@ -14,7 +14,9 @@ func getToken() string {
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
-	TOKEN := os.Getenv("TOKEN")
+	if TOKEN := os.Getenv("TOKEN"); TOKEN == "" {
+		log.Fatal("token is empty")
+	}
 	return TOKEN
 }
 
