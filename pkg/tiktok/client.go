@@ -1,7 +1,7 @@
-package main
+package tiktok
 
 import (
-	"errors"
+	"download_bot/pkg/interfaces"
 	"io"
 	"net/http"
 	"net/http/cookiejar"
@@ -9,32 +9,9 @@ import (
 	"time"
 )
 
-type VideoService interface {
-	NewVideo(string) VideoObject
-	Match(string) bool
-	GetHTML(string) (io.ReadCloser, error)
-	FetchVideo(string) (io.ReadCloser, error)
-}
-
-type Router struct {
-	services []VideoService
-}
-
-func NewRouter(services ...VideoService) *Router {
-	return &Router{services: services}
-}
-
-func (r *Router) Resolve(url string) (VideoService, error) {
-	for _, s := range r.services {
-		if s.Match(url) == true {
-			return s, nil
-		}
-	}
-	return nil, errors.New("Неизвестный сервис")
-}
-
 type TiktokService struct {
 	Client *http.Client
+	Name   string
 }
 
 func NewTiktokClient() *TiktokService {
@@ -47,10 +24,15 @@ func NewTiktokClient() *TiktokService {
 
 	return &TiktokService{
 		Client: client,
+		Name:   "tiktok",
 	}
 }
 
-func (t *TiktokService) NewVideo(url string) VideoObject {
+func (t *TiktokService) GetName() string {
+	return t.Name
+}
+
+func (t *TiktokService) NewVideo(url string) interfaces.VideoObject {
 	return NewTiktokVideo(t, url)
 }
 
@@ -82,7 +64,7 @@ func (t *TiktokService) GetHTML(url string) (io.ReadCloser, error) {
 	return resp.Body, nil
 }
 
-func (t *TiktokService) FetchVideo(url string) (io.ReadCloser, error) {
+func (t *TiktokService) FetchFile(url string) (io.ReadCloser, error) {
 	req, _ := t.newRequest("GET", url)
 	req.Header.Set("Referer", "https://www.tiktok.com/")
 

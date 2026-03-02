@@ -5,6 +5,10 @@ import (
 	"os"
 	"time"
 
+	hd "download_bot/pkg/handlers"
+	rt "download_bot/pkg/router"
+	tt "download_bot/pkg/tiktok"
+
 	"github.com/joho/godotenv"
 	tele "gopkg.in/telebot.v4"
 )
@@ -22,9 +26,9 @@ func getToken() string {
 }
 
 func main() {
-	tiktok := NewTiktokClient()
+	tiktok := tt.NewTiktokClient()
 
-	router := NewRouter(tiktok)
+	router := rt.NewRouter(tiktok)
 
 	TOKEN := getToken()
 
@@ -39,7 +43,7 @@ func main() {
 		return
 	}
 
-	register_handlers(bot, router)
+	hd.RegisterHandlers(bot, router)
 
 	bot.Start()
 }
